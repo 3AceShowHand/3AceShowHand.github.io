@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: http://3AceShowHand.github.io/sitemap.xml
