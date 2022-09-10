@@ -48,11 +48,6 @@ defaultContentLanguage = "en"           # Default language to use
   weight = 40
   identifier = "categories"
   pageref = "/categories/"
-[[menu.main]]
-  name = "About"
-  weight = 50
-  identifier = "about"
-  url = "/about/"
 
 [params]
   since = "2022/09/10"            # Site creation time          # 站点建立时间
