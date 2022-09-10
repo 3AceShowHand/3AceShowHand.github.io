@@ -2,7 +2,7 @@
 # If you want to see the full configuration, please check `full-config.toml` .
 # And see https://gohugo.io/getting-started/configuration/ .
 
-baseURL = "http://3AceShowHand.github.io/"
+baseURL = "https://3AceShowHand.github.io/"
 title = "闲杂小记"
 enableRobotsTXT = true
 enableEmoji = true
@@ -80,8 +80,6 @@ defaultContentLanguage = "en"           # Default language to use
 
   [params.social]                                         # 社交链接
     a-email = "mailto:your@email.com"
-    b-stack-overflow = "http://localhost:1313"
-    e-linkedin = "http://localhost:1313"
     g-github = "https://github.com/3AceShowHand"
-    i-zhihu = "http://localhost:1313"
-    q-bilibili = "http://localhost:1313"
+    # e-linkedin = "http://localhost:1313"
+    # i-zhihu = "http://localhost:1313"
