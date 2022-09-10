@@ -3,7 +3,7 @@
 # And see https://gohugo.io/getting-started/configuration/ .
 
 baseURL = "http://3AceShowHand.github.io/"
-title = "A little notes"
+title = "闲杂小记"
 enableRobotsTXT = true
 enableEmoji = true
 theme = "jane"
@@ -21,7 +21,7 @@ defaultContentLanguage = "en"           # Default language to use
   languageCode = "en"
 
 [author]                  # essential                     # 必需
-  name = "xianmin"
+  name = "Ling Jin"
 
 [sitemap]                 # essential                     # 必需
   changefreq = "weekly"
@@ -29,7 +29,7 @@ defaultContentLanguage = "en"           # Default language to use
   filename = "sitemap.xml"
 
 [[menu.main]]             # config your menu              # 配置目录
-  name = "This is Home"
+  name = "Home"
   weight = 10
   identifier = "home"
   pageref = "/"
@@ -49,10 +49,10 @@ defaultContentLanguage = "en"           # Default language to use
   identifier = "categories"
   pageref = "/categories/"
 [[menu.main]]
-  name = "external-link"
+  name = "About"
   weight = 50
-  pageref = "https://gohugo.io"
-
+  identifier = "about"
+  url = "/about/"
 
 [params]
   since = "2022/09/10"            # Site creation time          # 站点建立时间
@@ -60,8 +60,8 @@ defaultContentLanguage = "en"           # Default language to use
   rssFullContent = true     # if false, Rss feed instead of the summary
 
   # site info (optional)                                  # 站点信息（可选，不需要的可以直接注释掉）
-  logoTitle = "Jane"        # default: the title value    # 默认值: 上面设置的title值
-  keywords = ["Hugo", "theme","jane"]
+  logoTitle = "A little notes"        # default: the title value    # 默认值: 上面设置的title值
+  keywords = ["life story", "programming", "database"]
   description = "一些平时生活工作的小记录"
 
   # The date format to use; for a list of valid formats, see https://gohugo.io/functions/format/
