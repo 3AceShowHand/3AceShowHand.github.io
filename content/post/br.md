@@ -2,12 +2,12 @@
 title: "Br"
 date: 2022-11-21T17:21:49+08:00
 lastmod: 2022-11-21T17:21:49+08:00
-draft: true
-keywords: []
-description: ""
-tags: []
-categories: []
-author: ""
+draft: false
+keywords: ["br", "tidb"]
+description: "walk through tidb br' source code"
+tags: ["tidb", "br"]
+categories: ["development"]
+author: "Ling Jin"
 
 # Uncomment to pin article to front page
 # weight: 1
