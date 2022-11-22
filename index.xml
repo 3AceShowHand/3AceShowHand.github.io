@@ -1,4 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>闲杂小记</title><link>https://3AceShowHand.github.io/</link><description>Recent content on 闲杂小记</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 21 Nov 2022 17:21:49 +0800</lastBuildDate><atom:link href="https://3AceShowHand.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>https://3AceShowHand.github.io/about/</link><pubDate>Sat, 10 Sep 2022 15:21:00 +0800</pubDate><guid>https://3AceShowHand.github.io/about/</guid><description>&lt;p>一个程序员，随便写写&lt;/p></description></item><item><title>Br</title><link>https://3AceShowHand.github.io/post/br/</link><pubDate>Mon, 21 Nov 2022 17:21:49 +0800</pubDate><guid>https://3AceShowHand.github.io/post/br/</guid><description>&lt;ol>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>闲杂小记</title><link>https://3AceShowHand.github.io/</link><description>Recent content on 闲杂小记</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 22 Nov 2022 23:34:28 +0800</lastBuildDate><atom:link href="https://3AceShowHand.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>https://3AceShowHand.github.io/about/</link><pubDate>Sat, 10 Sep 2022 15:21:00 +0800</pubDate><guid>https://3AceShowHand.github.io/about/</guid><description>&lt;p>一个程序员，随便写写&lt;/p></description></item><item><title>TiDB MVCC GC</title><link>https://3AceShowHand.github.io/post/mvcc-gc/</link><pubDate>Tue, 22 Nov 2022 23:34:28 +0800</pubDate><guid>https://3AceShowHand.github.io/post/mvcc-gc/</guid><description>&lt;p>TiDB 事物基于 MVCC 实现，新的数据写入，旧的数据依旧存在，通过时间戳进行区分，成为数据的不同版本。此处的 GC 指的是对旧数据进行清除。&lt;/p>
+&lt;p>TiDB 集群中，存在一个节点成为 GC Leader，负责清除老旧的 MVCC 版本数据。GC 会定期触发，默认 10 分钟一次。&lt;/p>
+&lt;p>GC 的时候，会默认保留最近 10 分钟内的老旧数据，该时间被称为 “GC life time”。当前时间，减去 “GC life time” 得到的时刻，被称为 “GC Safe Point”，即在该时刻之后的数据，都被保留。&lt;/p>
+&lt;p>GC 可能是一个颇为耗时的过程，如果当前触发的 GC 过程正在执行中，下一次触发 GC 到达，那么新触发的 GC 不会执行。&lt;/p>
+&lt;p>GC 执行过程中，不应该影响其他正在执行的事物。如果存在执行时间较长的事物，那么 GC Safe Point 不会大于正在执行的事物的 start_ts。也就是说，GC Safe Point 的计算公式为：&lt;/p>
+&lt;pre tabindex="0">&lt;code>GC Safe Point = min(current_time - gc_life_time, start-ts of all running transactions)
+&lt;/code>&lt;/pre>&lt;h2 id="gc-的执行过程">GC 的执行过程&lt;/h2>
+&lt;p>第一阶段执行 &amp;ldquo;resolve lock&amp;rdquo; 操作，清除所有 regions 上 safe point 之前的锁。&lt;/p>
+&lt;p>第二阶段执行 &amp;ldquo;delete ranges&amp;rdquo;，快速删除由于 DROP TABLE / DROP Index 等操作产生的整区间的垃圾数据。&lt;/p>
+&lt;p>第三阶段会扫描每个 TiKV 上的数据，针对每一个 key 删除其不再需要的老旧版本。会对每个 key 保留 safe point 前的最后一次写入（除非最后一次写入是删除）。只需要将 safe point 发送给 PD，即可结束整轮 GC。TiKV 会自行检测到 safe point 发生了更新，会对当前节点上所有作为 Region leader 进行 GC。与此同时，GC leader 可以继续触发下一轮 GC。&lt;/p>
+&lt;h2 id="resolve-lock-的实现">Resolve lock 的实现&lt;/h2>
+&lt;h2 id="gc-的具体执行过程">GC 的具体执行过程&lt;/h2>
+&lt;h2 id="gc-对-ticdc-的影响">GC 对 TiCDC 的影响&lt;/h2>
+&lt;h2 id="gc-对-br-的影响">GC 对 BR 的影响&lt;/h2>
+&lt;h2 id="参考">参考&lt;/h2>
+&lt;p>&lt;a href="https://docs.pingcap.com/zh/tidb/dev/garbage-collection-overview">https://docs.pingcap.com/zh/tidb/dev/garbage-collection-overview&lt;/a>&lt;/p></description></item><item><title>Br</title><link>https://3AceShowHand.github.io/post/br/</link><pubDate>Mon, 21 Nov 2022 17:21:49 +0800</pubDate><guid>https://3AceShowHand.github.io/post/br/</guid><description>&lt;ol>
 &lt;li>br 的应用场景&lt;/li>
 &lt;li>什么是全量备份&lt;/li>
 &lt;/ol>
@@ -8,7 +23,38 @@
 &lt;/ol>
 &lt;h1 id="backup-工作过程">Backup 工作过程&lt;/h1>
 &lt;pre tabindex="0">&lt;code>tiup br backup db --db=sysbench --pd=http://10.2.7.4:2379 --storage=&amp;#34;s3://db-sysbench-300?access-key=minioadmin&amp;amp;secret-access-key=minioadmin&amp;amp;endpoint=http%3a%2f%2f10.2.7.72:9199&amp;amp;force-path-style=true&amp;#34; --send-credentials-to-tikv=true
-&lt;/code>&lt;/pre>&lt;p>backup ts 是什么。基于 TiDB MVCC 实现的快照备份，backup-ts 指定了备份的 tso。&lt;/p>
+&lt;/code>&lt;/pre>&lt;p>Backup 执行的产物：&lt;/p>
+&lt;ol>
+&lt;li>backup.lock&lt;/li>
+&lt;li>backupmeta&lt;/li>
+&lt;li>多个文件夹，每个文件夹里存放多个 sst 文件。&lt;/li>
+&lt;/ol>
+&lt;p>Backup 的基本工作过程：&lt;/p>
+&lt;ol>
+&lt;li>初始化到下游备份存储节点的连接&lt;/li>
+&lt;li>找到需要被备份的 ranges&lt;/li>
+&lt;li>根据 backup-ts，拿到一个 snapshot，在该 snapshot 智商，对目标 ranges 进行备份。&lt;/li>
+&lt;/ol>
+&lt;p>备份数据，备份 schema，写 meta。&lt;/p>
+&lt;p>对每一个 schema 计算 checksum。发送 checksum request 到 tikv，收集 response，构建 checksum 结果。&lt;/p>
+&lt;p>（添加流程图）大致流程：&lt;/p>
+&lt;p>检查配置 -&amp;gt; 创建 client -&amp;gt; 创建 backup storage -&amp;gt; 检查 backup storage 的可用性，不能有其他 backup 正在使用该 storage -&amp;gt; 对 backup storage 上 file lock -&amp;gt; 修改 gc ttl -&amp;gt; 生成 backup ts&lt;/p>
+&lt;p>启动 safe point keeper，周期性更新 gc safe point。&lt;/p>
+&lt;p>创建 &lt;code>backupRequest&lt;/code>, StartVersion &amp;lt;-&amp;gt; EndVersion。&lt;/p>
+&lt;h2 id="meta-writer-的工作过程">meta writer 的工作过程&lt;/h2>
+&lt;p>创建 meta writer。&lt;/p>
+&lt;p>&lt;code>FlushBackUpMeta&lt;/code> 将 meta 序列化，然后加密，再写到目标存储系统。&lt;/p>
+&lt;h2 id="backup-ranges">Backup ranges&lt;/h2>
+&lt;p>&lt;code>client.BackupRanges&lt;/code>，按照 range 备份，并行执行。分别调用 &lt;code>client.BackupRange&lt;/code>。&lt;/p>
+&lt;ol>
+&lt;li>找到所有的 tikv store&lt;/li>
+&lt;li>将 backup requst 发送到所有 tikv instances (stores)，收集对应的 response。&lt;/li>
+&lt;li>执行 fineGrainedBackup&lt;/li>
+&lt;/ol>
+&lt;p>根据步骤 2 手机到的结果，构建已经被备份的 ranges。查看是否存在尚未被备份的 ranges，如果存在则对这些 ranges 执行 backup 操作。&lt;/p>
+&lt;h2 id="backup-schemas">Backup schemas&lt;/h2>
+&lt;h2 id="flush-meta">Flush meta&lt;/h2>
+&lt;p>backup ts 是什么。基于 TiDB MVCC 实现的快照备份，backup-ts 指定了备份的 tso。&lt;/p>
 &lt;p>备份存储地址&lt;/p>
 &lt;p>告知 tikv 对目标 regions 进行备份&lt;/p>
 &lt;p>tikv 侧的 backup worker&lt;/p>
@@ -16,11 +62,7 @@
 &lt;p>是否备份索引等数据？&lt;/p>
 &lt;p>如何对备份数据进行压缩？ztsd&lt;/p>
 &lt;p>前置检查，连接 pd，tikv&lt;/p>
-&lt;p>创建 client -&amp;gt; 创建 backup storage -&amp;gt; 检查 backup storage 的可用性，不能有其他 backup 正在使用该 storage -&amp;gt; 对 backup storage 上 file lock -&amp;gt; 修改 gc ttl -&amp;gt; 生成 backup ts&lt;/p>
-&lt;p>启动 safe point keeper，周期性更新 gc safe point。&lt;/p>
 &lt;p>拿到需要被备份的 ranges，schemas，placement polies&lt;/p>
-&lt;p>创建 &lt;code>backupRequest&lt;/code>, StartVersion &amp;lt;-&amp;gt; EndVersion。&lt;/p>
-&lt;p>&lt;code>client.BackupRanges&lt;/code>，按照 range 备份，并行执行。分别调用 &lt;code>client.BackupRange&lt;/code>。&lt;/p>
 &lt;p>&lt;code>metaWriter.FinishWriteMetas&lt;/code>&lt;/p>
 &lt;p>备份 schemas：对每个 schema 计算 checksum，将 table 的统计信息导出到 json。&lt;/p>
 &lt;p>schema 是什么？&lt;/p>
