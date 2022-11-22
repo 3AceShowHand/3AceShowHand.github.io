@@ -44,6 +44,58 @@ mathjax: false
 tiup br backup db --db=sysbench --pd=http://10.2.7.4:2379 --storage="s3://db-sysbench-300?access-key=minioadmin&secret-access-key=minioadmin&endpoint=http%3a%2f%2f10.2.7.72:9199&force-path-style=true" --send-credentials-to-tikv=true
 ```
 
+Backup 执行的产物：
+
+1. backup.lock
+2. backupmeta
+3. 多个文件夹，每个文件夹里存放多个 sst 文件。
+
+
+Backup 的基本工作过程：
+
+1. 初始化到下游备份存储节点的连接
+2. 找到需要被备份的 ranges
+3. 根据 backup-ts，拿到一个 snapshot，在该 snapshot 智商，对目标 ranges 进行备份。
+
+
+
+备份数据，备份 schema，写 meta。
+
+对每一个 schema 计算 checksum。发送 checksum request 到 tikv，收集 response，构建 checksum 结果。
+
+
+（添加流程图）大致流程：
+
+检查配置 -> 创建 client -> 创建 backup storage -> 检查 backup storage 的可用性，不能有其他 backup 正在使用该 storage -> 对 backup storage 上 file lock -> 修改 gc ttl -> 生成 backup ts
+
+启动 safe point keeper，周期性更新 gc safe point。
+
+创建 `backupRequest`, StartVersion <-> EndVersion。
+
+
+## meta writer 的工作过程
+
+创建 meta writer。
+
+`FlushBackUpMeta` 将 meta 序列化，然后加密，再写到目标存储系统。
+
+
+## Backup ranges
+
+`client.BackupRanges`，按照 range 备份，并行执行。分别调用 `client.BackupRange`。
+
+1. 找到所有的 tikv store
+2. 将 backup requst 发送到所有 tikv instances (stores)，收集对应的 response。
+3. 执行 fineGrainedBackup
+
+根据步骤 2 手机到的结果，构建已经被备份的 ranges。查看是否存在尚未被备份的 ranges，如果存在则对这些 ranges 执行 backup 操作。
+
+
+## Backup schemas
+
+## Flush meta
+
+
 backup ts 是什么。基于 TiDB MVCC 实现的快照备份，backup-ts 指定了备份的 tso。
 
 备份存储地址
@@ -61,15 +113,11 @@ tikv 侧的 backup worker
 
 前置检查，连接 pd，tikv
 
-创建 client -> 创建 backup storage -> 检查 backup storage 的可用性，不能有其他 backup 正在使用该 storage -> 对 backup storage 上 file lock -> 修改 gc ttl -> 生成 backup ts
-
-启动 safe point keeper，周期性更新 gc safe point。
-
 拿到需要被备份的 ranges，schemas，placement polies
 
-创建 `backupRequest`, StartVersion <-> EndVersion。
 
-`client.BackupRanges`，按照 range 备份，并行执行。分别调用 `client.BackupRange`。
+
+
 
 `metaWriter.FinishWriteMetas`
 
